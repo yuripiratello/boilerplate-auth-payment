@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "boilerplate-auth-payment"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = "^4.2.6"
+django-oauth-toolkit = "^2.3.0"
+djangorestframework = "^3.14.0"
+Markdown = "^3.5"
+django-filter = "^23.3"
+psycopg = "^3.1.12"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.292"
+black = "^23.9.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
