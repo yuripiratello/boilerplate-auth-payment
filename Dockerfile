@@ -7,6 +7,7 @@ WORKDIR /app
 # Set env variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH=${PYTHONPATH}:/app
 
 RUN apt-get update \
     && apt-get install -y gcc python3-dev build-essential libpq5

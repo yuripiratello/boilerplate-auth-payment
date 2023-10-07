@@ -15,6 +15,14 @@ services:
       - postgres
     networks:
       - db-network
+  stripe:
+    image: stripe/stripe-cli
+    command: listen --forward-to http://api:8000/webhooks/stripe/
+    depends_on:
+      - web
+    environment:
+      - STRIPE_API_KEY=sk_test_******
+      - STRIPE_DEVICE_NAME=djstripe_docker
   postgres:
     image: postgres:15
     ports:
