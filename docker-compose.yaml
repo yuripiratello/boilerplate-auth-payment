@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: python boilerplate/manage.py runserver 0.0.0.0:8000
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - db-network
+  postgres:
+    image: postgres:15
+    ports:
+      - "9091:5432"
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123mudar
+      POSTGRES_DB: boilerplate
+    volumes:
+      - ./database:/database
+      - /var/lib/postgresql/data
+    networks:
+      - db-network
+
+networks:
+  db-network:
+    driver: bridge
