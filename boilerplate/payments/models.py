@@ -23,10 +23,25 @@ class Purchase(BaseModel):
     )
     status = models.CharField(
         max_length=100,
+        choices=(
+            ("pending", _("Pending")),
+            ("completed", _("Completed")),
+            ("failed", _("Failed")),
+            ("canceled", _("Canceled")),
+        ),
         verbose_name=_("Status"),
     )
+    # TODO: Any other purchase type? Change to model?
+    purchase_type = models.CharField(
+        max_length=100,
+        choices=(
+            ("subscription", _("Subscription")),
+            ("one time", _("One Time")),
+        ),
+        verbose_name=_("Purchase Type"),
+    )
     coupon = models.ForeignKey(
-        "payments.Coupon",
+        "Coupon",
         on_delete=models.CASCADE,
         related_name="purchases",
         verbose_name=_("Coupon"),
@@ -59,7 +74,7 @@ class Coupon(BaseModel):
         verbose_name=_("Products"),
     )
     additional = models.ManyToManyField(
-        "products.Additional",
+        "PurchaseAdditional",
         blank=True,
         related_name="coupons",
         verbose_name=_("Additional"),
@@ -111,11 +126,11 @@ class PurchaseAdditional(BaseModel):
         related_name="additionals",
         verbose_name=_("Purchase"),
     )
-    additional = models.ForeignKey(
-        "products.Additional",
+    product = models.ForeignKey(
+        "products.Product",
         on_delete=models.CASCADE,
-        related_name="purchases",
-        verbose_name=_("Additional"),
+        related_name="additionals",
+        verbose_name=_("Product"),
     )
     quantity = models.IntegerField(
         verbose_name=_("Quantity"),

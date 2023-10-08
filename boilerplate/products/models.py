@@ -20,6 +20,14 @@ class Product(BaseModel):
         max_length=100,
     )
     description = models.TextField(verbose_name=_("Description"))
+    purchase_types_enabled = models.CharField(
+        max_length=100,
+        verbose_name=_("Product Type"),
+        choices=(
+            ("subscription", _("Subscription")),
+            ("one time", _("One Time")),
+        ),
+    )
     tags = models.ManyToManyField(
         ProductTag,
         blank=True,

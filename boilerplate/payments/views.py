@@ -4,8 +4,8 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
 from payments.models import Purchase
-from products.models import Price, Product
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -24,26 +24,22 @@ class StripeWebhookView(View):
 
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-        except ValueError as e:
+        except ValueError:
             # Invalid payload
             return HttpResponse(status=400)
-        except stripe.error.SignatureVerificationError as e:
+        except stripe.error.SignatureVerificationError:
             # Invalid signature
             return HttpResponse(status=400)
 
         if event["type"] == "checkout.session.completed":
-            print("Payment successful")
             session = event["data"]["object"]
-            customer_email = session["customer_details"]["email"]
             purchase_id = session["metadata"]["purchase_id"]
             purchase = get_object_or_404(
                 Purchase,
                 id=purchase_id,
             )
-            
-            PaymentHistory.objects.create(
-                email=customer_email, product=product, payment_status="completed"
-            )  # Add this
+            purchase.status = "completed"
+            purchase.save()
 
         # Can handle other events here.
 

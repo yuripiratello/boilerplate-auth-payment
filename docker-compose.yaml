@@ -19,10 +19,10 @@ services:
     image: stripe/stripe-cli
     command: listen --forward-to http://api:8000/webhooks/stripe/
     depends_on:
-      - web
+      - api
     environment:
-      - STRIPE_API_KEY=sk_test_******
-      - STRIPE_DEVICE_NAME=djstripe_docker
+      - STRIPE_API_KEY=sk_test_51NyhcKEYSaeJaejfjMCzPP4VTI3LWU7FKNKZitv4hfAgBR6Mq68WMIyWMEYZxkz26o7vzphzPfOZVaJ0zuB9oaqM00ICH2OGd9
+      - STRIPE_DEVICE_NAME=boilerplate_stripe_docker
   postgres:
     image: postgres:15
     ports:
@@ -33,7 +33,6 @@ services:
       POSTGRES_PASSWORD: 123mudar
       POSTGRES_DB: boilerplate
     volumes:
-      - ./database:/database
       - /var/lib/postgresql/data
     networks:
       - db-network
