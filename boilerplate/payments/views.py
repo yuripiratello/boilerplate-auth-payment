@@ -46,6 +46,7 @@ class ProductsView(APIView):
 
     def get(self, request):
         products_list = stripe.Price.list(
+            product="prod_Omxr1g2SEhwtwo",
             expand=["data.product"],
         )
         return Response(
@@ -65,9 +66,6 @@ class StripeWebhookView(APIView):
         endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
         sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
         event = None
-
-        pprint("payload", payload)
-
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         except ValueError:
