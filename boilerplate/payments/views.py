@@ -1,20 +1,64 @@
 import stripe
+from pprint import pprint
+from django.db import transaction
 from django.conf import settings
-from django.http import HttpResponse
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from payments.models import Purchase
+from payments.utils import new_payment, create_stripe_link
+from payments.serializers import PaymentIntentionSerializer
+from payments.models import Payment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
+class CheckoutLinkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        payment_intention = PaymentIntentionSerializer(data=request.data)
+        if not payment_intention.is_valid():
+            return Response(
+                data=payment_intention.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        with transaction.atomic():
+            payment = new_payment(
+                payment_intention=payment_intention,
+                user=request.user,
+            )
+            checkout_session = create_stripe_link(
+                payment,
+                payment_intention.validated_data.get("price"),
+            )
+            return Response(
+                data={"checkout_url": checkout_session.url},
+                status=status.HTTP_200_OK,
+            )
+
+
+class ProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        products_list = stripe.Price.list(
+            expand=["data.product"],
+        )
+        return Response(
+            {
+                "prices": products_list["data"],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 @method_decorator(csrf_exempt, name="dispatch")
-class StripeWebhookView(View):
-    """
-    Stripe webhook view to handle checkout session completed event.
-    """
+class StripeWebhookView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request, format=None):
         payload = request.body
@@ -22,25 +66,25 @@ class StripeWebhookView(View):
         sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
         event = None
 
+        pprint("payload", payload)
+
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         except ValueError:
             # Invalid payload
-            return HttpResponse(status=400)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         except stripe.error.SignatureVerificationError:
             # Invalid signature
-            return HttpResponse(status=400)
-
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         if event["type"] == "checkout.session.completed":
+            pprint(event, indent=2)
             session = event["data"]["object"]
-            purchase_id = session["metadata"]["purchase_id"]
-            purchase = get_object_or_404(
-                Purchase,
-                id=purchase_id,
+            payment_id = session["metadata"]["payment_id"]
+            payment = get_object_or_404(
+                Payment,
+                id=payment_id,
             )
-            purchase.status = "completed"
-            purchase.save()
+            payment.status = "completed"
+            payment.save()
 
-        # Can handle other events here.
-
-        return HttpResponse(status=200)
+        return Response(status=status.HTTP_200_OK)

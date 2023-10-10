@@ -15,14 +15,16 @@ services:
       - postgres
     networks:
       - db-network
-  stripe:
-    image: stripe/stripe-cli
-    command: listen --forward-to http://api:8000/webhooks/stripe/
-    depends_on:
-      - api
-    environment:
-      - STRIPE_API_KEY=sk_test_51NyhcKEYSaeJaejfjMCzPP4VTI3LWU7FKNKZitv4hfAgBR6Mq68WMIyWMEYZxkz26o7vzphzPfOZVaJ0zuB9oaqM00ICH2OGd9
-      - STRIPE_DEVICE_NAME=boilerplate_stripe_docker
+  # stripe:
+  #   image: stripe/stripe-cli
+  #   command: listen --api-key sk_test_51NyhcKEYSaeJaejfjMCzPP4VTI3LWU7FKNKZitv4hfAgBR6Mq68WMIyWMEYZxkz26o7vzphzPfOZVaJ0zuB9oaqM00ICH2OGd9 --device-name boilerplate_stripe_docker --forward-to http://api:8000/api/payments/webhooks/stripe/
+  #   links:
+  #     - api
+  #   depends_on:
+  #     - api
+  #   environment:
+  #     - STRIPE_API_KEY=sk_test_51NyhcKEYSaeJaejfjMCzPP4VTI3LWU7FKNKZitv4hfAgBR6Mq68WMIyWMEYZxkz26o7vzphzPfOZVaJ0zuB9oaqM00ICH2OGd9
+  #     - STRIPE_DEVICE_NAME=boilerplate_stripe_docker
   postgres:
     image: postgres:15
     ports:
