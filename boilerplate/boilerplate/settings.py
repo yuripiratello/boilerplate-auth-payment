@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
+from datetime import timedelta
 from decouple import config
 from pathlib import Path
 
@@ -25,7 +27,7 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -37,8 +39,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "oauth2_provider",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "accounts",
+    "payments",
 ]
 
 MIDDLEWARE = [
@@ -122,35 +126,31 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+ACCESS_TOKEN_LIFETIME = timedelta(minutes=10 * 60)
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
-    )
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
-
-# OIDC Settings
-OIDC_RSA_PRIVATE_KEY_PATH = config("OIDC_RSA_PRIVATE_KEY_PATH")
-
-with open(OIDC_RSA_PRIVATE_KEY_PATH) as f:
-    OIDC_RSA_PRIVATE_KEY = f.read()
-
-OAUTH2_PROVIDER = {
-    "OIDC_ENABLED": True,
-    "OIDC_RSA_PRIVATE_KEY": OIDC_RSA_PRIVATE_KEY,
-    "OIDC_RP_INITIATED_LOGOUT_ENABLED": True,
-    "OIDC_RP_INITIATED_LOGOUT_ALWAYS_PROMPT": True,
-    "OAUTH2_VALIDATOR_CLASS": "tyllr.oauth_validator.CustomOAuth2Validator",
-    "PKCE_REQUIRED": False,
-    "SCOPES": {
-        "openid": "OpenID Connect scope",
-        "profile": "profile scope",
-        "email": "email scope",
-    },
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
 }
+
+STRIPE_PUBLISHABLE_KEY = config("STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET")
+DEFAULT_CURRENCY = "USD"
+PAYMENT_SUCCESS_URL = "http://localhost:8000/success"
+PAYMENT_CANCEL_URL = "http://localhost:8000/cancel"
